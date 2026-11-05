@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { detectTerminalName, resolveRenderer } from "../src/terminal.ts";
+import { detectTerminalName, resolveRenderer, fallbackProtocol, unrecognizedWarning } from "../src/terminal.ts";
 import { DEFAULTS } from "../src/config.ts";
 import type { TerminalMapping } from "../src/types.ts";
 
@@ -154,4 +154,43 @@ test("the shipped defaults carry herdr and alacritty, in the code and in config.
       assert.deepEqual(terminals.find((entry) => entry.match === name), { match: name, render });
     }
   }
+});
+
+test("an unnamed terminal never gets image escapes, whatever pi-tui claims", () => {
+  // pi-tui 1.4.0 reports images: "kitty" inside a plain Alacritty, where kitty
+  // escapes draw nothing. An unverifiable claim is not evidence.
+  withEnv({ TERM: "xterm-256color", COLORTERM: "truecolor" }, () => {
+    assert.equal(fallbackProtocol("kitty"), "blocks", "an uncorroborated kitty claim falls back to blocks");
+    assert.equal(fallbackProtocol("iterm2"), "blocks", "and so does an iterm2 claim");
+  });
+  withEnv({ KITTY_WINDOW_ID: "1", TERM: "xterm-kitty", COLORTERM: "truecolor" }, () => {
+    assert.equal(fallbackProtocol("kitty"), "kitty", "a corroborated kitty claim is kept");
+  });
+  withEnv({ TERM_PROGRAM: "WezTerm", WEZTERM_PANE: "0", COLORTERM: "truecolor" }, () => {
+    assert.equal(fallbackProtocol("iterm2"), "iterm2", "a corroborated iterm2 claim is kept");
+  });
+});
+
+test("a terminal nothing identifies draws the art with blocks, not the ASCII bot", () => {
+  // Alacritty on this machine reports TERM=xterm-256color and no TERM_PROGRAM, so it
+  // lands here: pi-tui says it has no image protocol, and ASCII threw the pixel art away.
+  withEnv({ TERM: "xterm-256color", COLORTERM: "truecolor" }, () => {
+    assert.equal(fallbackProtocol(null), "blocks", "truecolor without images means blocks");
+  });
+  withEnv({ TERM: "xterm-256color", COLORTERM: undefined }, () => {
+    assert.equal(fallbackProtocol(null), "ascii", "no truecolor evidence stays on ASCII");
+  });
+  withEnv({ TERM: "dumb", COLORTERM: undefined }, () => {
+    assert.equal(fallbackProtocol(null), "ascii", "a dumb terminal gets ASCII");
+  });
+  withEnv({ TERM: "xterm-kitty", COLORTERM: "truecolor" }, () => {
+    assert.equal(fallbackProtocol("kitty"), "kitty", "a reported image protocol still wins");
+  });
+});
+
+test("an unnamed terminal that claims images is told exactly how to opt in", () => {
+  const warning = unrecognizedWarning("unknown", "kitty");
+  assert.match(warning, /Unrecognized terminal "unknown"/);
+  assert.match(warning, /"kitty"/);
+  assert.match(warning, /\{ "match": "unknown", "render": "kitty" \}/, "the override is copy-pasteable");
 });

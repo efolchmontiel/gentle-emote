@@ -178,16 +178,41 @@ function resolveDirect(
 
   // No whitelist match — fall back to pi-tui capabilities. That guess can be wrong
   // (it reports images for a layer that has none outside it), so say so.
-  const caps = getCapabilities();
-  const fallback: Protocol = caps.images ?? "ascii";
-  log(`terminal: no whitelist match for "${name}", using pi-tui capabilities → "${fallback}"`);
-  if (fallback === "ascii") return { ...base, protocol: fallback };
-  return {
-    ...base,
-    protocol: fallback,
-    warningLevel: "info",
-    warning: `[gentle-emote] Unrecognized terminal "${name}"; pi-tui reports "${fallback}" images. If the avatar does not appear, set "render": "blocks" for it in your terminals config.`,
-  };
+  const reported = getCapabilities().images ?? null;
+  const fallback = fallbackProtocol(reported);
+  log(`terminal: no whitelist match for "${name}", pi-tui reports "${reported}", using "${fallback}"`);
+  if (reported === null) return { ...base, protocol: fallback };
+  return { ...base, protocol: fallback, warningLevel: "info", warning: unrecognizedWarning(name, reported) };
+}
+
+/** What we tell a user whose terminal we cannot name but pi-tui claims to know. */
+export function unrecognizedWarning(name: string, reported: string): string {
+  return `[gentle-emote] Unrecognized terminal "${name}". pi-tui reports "${reported}" images but nothing in the environment confirms it, so the avatar is drawn as text. Set { "match": "${name}", "render": "${reported}" } to trust it.`;
+}
+
+/**
+ * What to draw for a terminal we cannot name. pi-tui's claim is only accepted when
+ * the environment corroborates it: an uncorroborated "kitty" (what pi-tui 1.4.0
+ * reports inside a plain Alacritty) sends escapes that draw nothing at all.
+ * ASCII is the last resort; a truecolor terminal can always paint half-blocks.
+ */
+export function fallbackProtocol(reported: string | null): Protocol {
+  if (reported && corroborates(reported)) return reported as Protocol;
+  return textProtocol();
+}
+
+function corroborates(protocol: string): boolean {
+  const program = (process.env.TERM_PROGRAM ?? "").toLowerCase();
+  const term = (process.env.TERM ?? "").toLowerCase();
+  if (protocol === "kitty" || protocol === "kitty-unicode") {
+    return Boolean(process.env.KITTY_WINDOW_ID || process.env.GHOSTTY_RESOURCES_DIR
+      || term.includes("kitty") || program === "kitty" || program === "ghostty");
+  }
+  if (protocol === "iterm2") {
+    return Boolean(process.env.ITERM_SESSION_ID || process.env.WEZTERM_PANE
+      || program === "iterm.app" || program === "wezterm");
+  }
+  return false;
 }
 
 /**
