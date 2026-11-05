@@ -52,6 +52,10 @@ One frame per state, shown with the pink accent (yours follows `/gentle:customiz
   </tr>
 </table>
 
+The subagent scene comes from the `agent` argument of the tool call, so a new agent that follows the same naming gets the right scene for free; a call without one (for example, continuing a task by id) shows `delegate`.
+
+The subagent scenes, `jobs`, `yolo`, `super-yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states simply never trigger; the rest works the same in plain Pi.
+
 Want a different character? [Create your own avatar](#create-your-own-avatar).
 
 ## Install
@@ -76,39 +80,6 @@ Restart the session (or `/reload`) and the Gentleman says hi.
 | `/emote idle` | Stops a preview and goes back to rest |
 
 Any new prompt cancels a preview, so the avatar always follows the real agent.
-
-## When each state shows
-
-| State | Situation | Detected by |
-|-------|-----------|-------------|
-| `hi` | Session starts | `session_start` |
-| `idle` | Waiting for you | No activity |
-| `think` | Model is reasoning | Thinking tokens streaming |
-| `talk` | Model is answering | Text streaming; stops half a second after it ends |
-| `read` | Reading code or memory | `read`, `grep`, `find`, `ls`, `glob`, `mem_search`, `codegraph_explore`, `web_fetch` |
-| `write` | Editing code | `write`, `edit`, `multi_edit`, `apply_patch` |
-| `tool` | Running any other tool | e.g. `bash` |
-| `ask` | A yes/no prompt is on screen | `ask_user_question`, `ask_user_choice`, or a confirm such as `Allow guarded git push?` |
-| `success` | The run ended fine | A run that used tools, with no tool errors |
-| `failure` | Something failed | A tool result with an error |
-| `compact` | Context compaction | `session_before_compact` |
-| `delegate` | Any subagent | `subagent_run`, `subagent_continue`, `subagent_reply` |
-| `explore` | Exploration subagent | An agent matching `explore` (`gentle-ai-explore`) |
-| `build` | Implementing or fixing subagent | An agent matching `worker`, `fix` or `apply` (`gentle-ai-worker`) |
-| `verify` | Verifying subagent | An agent matching `verify` or `validator` (`gentle-ai-verify`) |
-| `judge` | Judging subagent | An agent matching `judge` or `refuter` (`jd-judge-a`, `review-refuter`) |
-| `review` | Review subagent | An agent starting with `review-` (`review-risk`, `review-resilience`…) |
-| `jira` | Jira subagent | An agent matching `jira` (`jira-comment`) |
-| `jobs` | Background jobs | `bash_background`, `monitor`, `job_list`, `job_stop` |
-| `yolo` | YOLO mode | Gentle Shell's permission mode is `yolo` (read-only, never toggled) |
-| `super-yolo` | Super YOLO mode | Gentle Shell's permission mode is `super-yolo` |
-| `remember` | Saving a memory in Engram | `mem_save` |
-| `grandma` | Long idle | No activity or keystrokes for `grandmaAfterMs` (30 s) |
-| `bye` | You say goodbye | A prompt matching `farewellPattern` (`chau`, `bye`, `nos vemos`…) |
-
-The subagent scene comes from the `agent` argument of the tool call, so a new agent that follows the same naming gets the right scene for free; a call without one (for example, continuing a task by id) shows `delegate`.
-
-The subagent scenes, `jobs`, `yolo`, `super-yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states simply never trigger; the rest works the same in plain Pi.
 
 ## Config
 
