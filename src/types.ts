@@ -17,6 +17,8 @@ export interface Config {
   enabled: boolean;
   debug: boolean;
   size: number;
+  /** Columns of truecolor half-blocks; 0 follows `size`. */
+  blocksCols: number;
   placement: Placement;
   /** Box the avatar in a rounded frame next to the prompt. */
   frame: boolean;

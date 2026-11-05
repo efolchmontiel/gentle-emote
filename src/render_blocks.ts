@@ -34,8 +34,15 @@ type Rgb = [number, number, number];
  */
 export const BLOCKS_WIDTH_FACTOR = 1.4;
 
-export function blocksWidth(size: number): number {
-  return Math.max(8, Math.round(size * BLOCKS_WIDTH_FACTOR));
+/**
+ * Columns of half-blocks for the avatar. `blocksCols` is the explicit width from
+ * config (set it to the sprite's width for a 1:1 mirror); 0 means auto, which
+ * scales with `size`. Lower bound keeps a face readable, upper bound keeps the
+ * prompt gutter usable.
+ */
+export function blocksWidth(size: number, blocksCols = 0): number {
+  const wanted = blocksCols > 0 ? blocksCols : Math.round(size * BLOCKS_WIDTH_FACTOR);
+  return Math.min(64, Math.max(8, wanted));
 }
 
 /**

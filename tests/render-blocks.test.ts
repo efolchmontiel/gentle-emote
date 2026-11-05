@@ -227,3 +227,24 @@ test("a wide text frame reserves the columns it actually paints, not the ascii c
   assert.equal(widest, 14, "the frame is 14 cells wide");
   assert.ok(avatar.cols >= widest, `reserved ${avatar.cols} columns for a ${widest}-cell frame`);
 });
+
+test("blocksCols sets the width, and 0 keeps the size-derived auto width", () => {
+  // The avatar's own art decides how much room its detail needs: 48 source pixels
+  // wide is the only width that mirrors the sprite pixel for pixel.
+  assert.equal(blocksWidth(10, 0), 14, "0 means auto");
+  assert.equal(blocksWidth(10, 24), 24, "an explicit width wins over the factor");
+  assert.equal(blocksWidth(10, 48), 48, "1:1 with a 48-pixel-wide sprite");
+  assert.equal(blocksWidth(10, 2), 8, "the floor still protects a readable minimum");
+  assert.equal(blocksWidth(10, 200), 64, "and an absurd width is capped");
+});
+
+test("a 48-column frame mirrors the sprite one source pixel per half-block", () => {
+  const sprite = decodePng(readFileSync(IDLE_PNG));
+  const renderer = new BlocksRenderer(48);
+  renderer.loadFrames(SET_DIR, EXT_DIR);
+  renderer.showFrame("idle", "idle.png");
+  const frame = renderer.getRenderedFrame();
+  assert.ok(frame && frame.kind === "text");
+  assert.equal(frame.lines.length, sprite.height / 2, "40 source rows render as 20 cell rows");
+  for (const line of frame.lines) assert.equal(stripAnsi(line).length, sprite.width, "48 cells");
+});

@@ -138,7 +138,7 @@ function createRendererFromResolved(resolved: ResolvedRenderer, config: Config):
     return inTmux ? new TmuxITermRenderer(size) : new ITermRenderer(size);
   }
   if (protocol === "blocks") {
-    const cols = blocksWidth(size);
+    const cols = blocksWidth(size, config.blocksCols);
     log(`createRenderer: using BlocksRenderer (${cols} cols for size ${size})`);
     return new BlocksRenderer(cols);
   }

@@ -101,6 +101,7 @@ Drop a `config.json` with only the keys you want to change in either place (the 
 | `placement` | `"beside-editor"` | Where the avatar sits: `"beside-editor"` or `"above-editor"` |
 | `frame` | `true` | Draws a rounded frame around the avatar |
 | `frameRows` | `4` | Avatar height in terminal rows. The prompt grows to match it |
+| `blocksCols` | `24` | Width of the `blocks` avatar in columns. Detail follows width: 14 is a blob, 24 keeps the character, 32 reads the sunglasses, 48 mirrors the 48-pixel sprite exactly. `0` follows `size` |
 | `minEditorWidth` | `40` | Below this prompt width the avatar hides to leave room for typing |
 | `grandmaAfterMs` | `30000` | Idle time before the grandma appears (any key resets it). Use `0` to disable it |
 | `farewellPattern` | Spanish and English goodbyes | Regex (case-insensitive) that triggers `bye` |
@@ -207,7 +208,16 @@ The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from c
 | Alacritty, herdr over Alacritty | truecolor blocks | ✅ Same pixel art, drawn with `▀` half-blocks |
 | Zellij, screen, terminals without truecolor | ASCII | Fallback only |
 
-**Alacritty has no image protocol**, and that is not something this extension can work around: images are not available there. Instead of drawing nothing, it renders the same PNG frames as 24-bit color half-blocks, which at avatar size look like the picture, only chunkier. A terminal that cannot do truecolor gets the ASCII bot.
+**Alacritty has no image protocol**, and that is not something this extension can work around: images are not available there. Instead of drawing nothing, it renders the same PNG frames as 24-bit color half-blocks. How close that gets to the artwork is a matter of width, one column per two source rows:
+
+| `blocksCols` | Looks like |
+|---|---|
+| 14 | The face and props are guesses; lettering is gone |
+| 24 (default) | The character reads: head, props, colors |
+| 32 | Sunglasses, mustache and hat lettering become legible |
+| 48 | Pixel for pixel — the width of the Gentleman's own sprites |
+
+A terminal that cannot do truecolor gets the ASCII bot.
 
 **herdr** is a pane layer, not a terminal: it rewrites `TERM` and `TERM_PROGRAM`, so the renderer is resolved from the terminal outside it (`GHOSTTY_RESOURCES_DIR`, `KITTY_WINDOW_ID`, `WEZTERM_PANE`). When nothing identifies the outer terminal, herdr gets blocks or ASCII plus one warning naming the override.
 
