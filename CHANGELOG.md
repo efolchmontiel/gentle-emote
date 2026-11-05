@@ -2,6 +2,16 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## Unreleased
+
+### Fixed
+- **herdr** — detected as the pane layer it is. The renderer now comes from the terminal outside herdr instead of pi-tui's claim, so herdr over a terminal without images no longer draws nothing in silence.
+- **Alacritty** — ships an explicit `blocks` renderer instead of an implicit ASCII fallback, and the state table no longer implies Alacritty can show images.
+
+### Added
+- **`blocks` renderer** — `"render": "blocks"` draws the shipped PNG frames as 24-bit color `▀` half-blocks, for truecolor terminals without an image protocol.
+- **Fallback warning** — when the avatar cannot use images, the session says so once, with the exact `terminals` override to set.
+
 ## gentle-emote v0.1.4
 
 ### Fixed

@@ -17,6 +17,7 @@ import { KittyUnicodeRenderer } from "./render_kitty_unicode.ts";
 import { ITermRenderer } from "./render_iterm.ts";
 import { TmuxITermRenderer } from "./render_tmux_iterm.ts";
 import { AsciiRenderer } from "./render_ascii.ts";
+import { BlocksRenderer, blocksWidth } from "./render_blocks.ts";
 import { Animator } from "./animator.ts";
 import { createWidgetFactory } from "./widget.ts";
 import { resolveRenderer } from "./terminal.ts";
@@ -135,6 +136,11 @@ function createRendererFromResolved(resolved: ResolvedRenderer, config: Config):
   if (protocol === "iterm2") {
     log(`createRenderer: using ${inTmux ? "TmuxITermRenderer" : "ITermRenderer"}`);
     return inTmux ? new TmuxITermRenderer(size) : new ITermRenderer(size);
+  }
+  if (protocol === "blocks") {
+    const cols = blocksWidth(size);
+    log(`createRenderer: using BlocksRenderer (${cols} cols for size ${size})`);
+    return new BlocksRenderer(cols);
   }
   log(`createRenderer: using AsciiRenderer`);
   return new AsciiRenderer();

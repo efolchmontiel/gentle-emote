@@ -201,9 +201,15 @@ The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from c
 | Terminal | Renderer | Status |
 |----------|----------|--------|
 | Ghostty, kitty, WarpTerminal | kitty Unicode placeholders | ✅ Crisp image in a frame |
+| herdr inside Ghostty, kitty or WezTerm | kitty Unicode placeholders | ✅ herdr is a layer: the renderer comes from the terminal outside it |
 | tmux (inside Ghostty or kitty) | kitty Unicode placeholders | ✅ Needs `set -g allow-passthrough on` |
 | iTerm2, WezTerm | iTerm2 images | ⚠️ Works, less tested |
-| Zellij, screen, others | ASCII | Fallback only |
+| Alacritty, herdr over Alacritty | truecolor blocks | ✅ Same pixel art, drawn with `▀` half-blocks |
+| Zellij, screen, terminals without truecolor | ASCII | Fallback only |
+
+**Alacritty has no image protocol**, and that is not something this extension can work around: images are not available there. Instead of drawing nothing, it renders the same PNG frames as 24-bit color half-blocks, which at avatar size look like the picture, only chunkier. A terminal that cannot do truecolor gets the ASCII bot.
+
+**herdr** is a pane layer, not a terminal: it rewrites `TERM` and `TERM_PROGRAM`, so the renderer is resolved from the terminal outside it (`GHOSTTY_RESOURCES_DIR`, `KITTY_WINDOW_ID`, `WEZTERM_PANE`). When nothing identifies the outer terminal, herdr gets blocks or ASCII plus one warning naming the override.
 
 For tmux, add this to `tmux.conf` and restart the tmux server:
 
@@ -217,10 +223,13 @@ set -sg escape-time 0
 Force a renderer with `terminals`:
 
 ```json
-{ "terminals": [{ "match": "tmux", "render": "kitty-unicode" }] }
+{ "terminals": [
+  { "match": "tmux", "render": "kitty-unicode" },
+  { "match": "herdr", "render": "blocks" }
+] }
 ```
 
-Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"ascii"`.
+Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"blocks"`, `"ascii"`.
 
 ## Limitations
 
@@ -228,6 +237,7 @@ Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"asc
 - YOLO and Super YOLO detection uses Gentle Shell's internal channel: it only reads the mode, never toggles it. In other hosts neither look shows.
 - `bye` plays when you say goodbye, not when the process quits (a quit clears the screen right away).
 - Zellij has no image passthrough, so it gets the ASCII fallback.
+- Alacritty does not implement any image protocol, so it never shows the crisp image: `blocks` is the closest it gets.
 
 ## Contributing
 
