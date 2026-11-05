@@ -17,6 +17,12 @@ The source colors `#ff00ff`, `#aa00aa` and `#ff80ff` remain runtime recoloring k
 
 To inspect the animations locally, run `/emote remember`, `/emote explore`, `/emote yolo` and `/emote super-yolo`. With either YOLO mode enabled, also run `/emote think`.
 
+The README shows one frame per state from `docs/scenes/`. Regenerate that grid with:
+
+```sh
+npm run scenes pink
+```
+
 To regenerate a frame contact sheet:
 
 ```sh

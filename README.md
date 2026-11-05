@@ -9,11 +9,50 @@
 
 </div>
 
-A pixel-art **Gentleman** that sits in a frame to the left of your prompt and acts out what the agent is doing: thinking, talking, reading, writing, delegating to subagents, watching background jobs, saving memories, going YOLO…
+A pixel-art **Gentleman** that sits in a frame to the left of your prompt and acts out what the agent is doing. Works in [Gentle Shell](https://github.com/Gentleman-Programming/gentle-shell) and [Pi](https://pi.dev).
 
-Works in [Gentle Shell](https://github.com/Gentleman-Programming/gentle-shell) and [Pi](https://pi.dev). Forked from [cgxeiji/pi-emote](https://github.com/cgxeiji/pi-emote). Want a different character? [Create your own avatar](#create-your-own-avatar).
+He only listens to local session events: no model calls, no context, no network. Forked from [cgxeiji/pi-emote](https://github.com/cgxeiji/pi-emote).
 
-See every state in the [gallery](https://github.com/efolchmontiel/gentle-emote/blob/main/docs/gallery.md), or preview them live with `/emote demo`.
+## Scenes
+
+One frame per state, shown with the pink accent (yours follows `/gentle:customize`). Every frame of every animation is in the [gallery](docs/gallery.md), and `/emote demo` plays them live.
+
+<table width="100%">
+  <tr>
+    <td align="center"><img src="docs/scenes/hi.png" alt="hi" width="96"><br><code>hi</code></td>
+    <td align="center"><img src="docs/scenes/idle.png" alt="idle" width="96"><br><code>idle</code></td>
+    <td align="center"><img src="docs/scenes/think.png" alt="think" width="96"><br><code>think</code></td>
+    <td align="center"><img src="docs/scenes/talk.png" alt="talk" width="96"><br><code>talk</code></td>
+    <td align="center"><img src="docs/scenes/read.png" alt="read" width="96"><br><code>read</code></td>
+    <td align="center"><img src="docs/scenes/write.png" alt="write" width="96"><br><code>write</code></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/scenes/tool.png" alt="tool" width="96"><br><code>tool</code></td>
+    <td align="center"><img src="docs/scenes/ask.png" alt="ask" width="96"><br><code>ask</code></td>
+    <td align="center"><img src="docs/scenes/success.png" alt="success" width="96"><br><code>success</code></td>
+    <td align="center"><img src="docs/scenes/failure.png" alt="failure" width="96"><br><code>failure</code></td>
+    <td align="center"><img src="docs/scenes/compact.png" alt="compact" width="96"><br><code>compact</code></td>
+    <td align="center"><img src="docs/scenes/delegate.png" alt="delegate" width="96"><br><code>delegate</code></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/scenes/explore.png" alt="explore" width="96"><br><code>explore</code></td>
+    <td align="center"><img src="docs/scenes/build.png" alt="build" width="96"><br><code>build</code></td>
+    <td align="center"><img src="docs/scenes/verify.png" alt="verify" width="96"><br><code>verify</code></td>
+    <td align="center"><img src="docs/scenes/judge.png" alt="judge" width="96"><br><code>judge</code></td>
+    <td align="center"><img src="docs/scenes/review.png" alt="review" width="96"><br><code>review</code></td>
+    <td align="center"><img src="docs/scenes/jira.png" alt="jira" width="96"><br><code>jira</code></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/scenes/jobs.png" alt="jobs" width="96"><br><code>jobs</code></td>
+    <td align="center"><img src="docs/scenes/yolo.png" alt="yolo" width="96"><br><code>yolo</code></td>
+    <td align="center"><img src="docs/scenes/super-yolo.png" alt="super-yolo" width="96"><br><code>super-yolo</code></td>
+    <td align="center"><img src="docs/scenes/remember.png" alt="remember" width="96"><br><code>remember</code></td>
+    <td align="center"><img src="docs/scenes/grandma.png" alt="grandma" width="96"><br><code>grandma</code></td>
+    <td align="center"><img src="docs/scenes/bye.png" alt="bye" width="96"><br><code>bye</code></td>
+  </tr>
+</table>
+
+Want a different character? [Create your own avatar](#create-your-own-avatar).
 
 ## Install
 
@@ -27,10 +66,6 @@ pi install npm:gentle-emote
 
 Restart the session (or `/reload`) and the Gentleman says hi.
 
-## Does it use tokens?
-
-**No.** gentle-emote only listens to local session events (agent start/end, message streaming, tool calls). It never calls a model, never adds anything to the context, and makes no network requests. Rendering happens entirely in your terminal.
-
 ## Commands
 
 | Command | What it does |
@@ -42,40 +77,38 @@ Restart the session (or `/reload`) and the Gentleman says hi.
 
 Any new prompt cancels a preview, so the avatar always follows the real agent.
 
-## What he does and when
+## When each state shows
 
-| State | Situation | How it is detected | Animation |
-|-------|-----------|--------------------|-----------|
-| `hi` | Session starts | `session_start` | Flies in under a propeller beanie, lands, takes the beanie off and waves |
-| `idle` | Waiting for input | No activity | Rests and blinks |
-| `think` | Model is reasoning | Thinking tokens streaming | Hand on chin, a light bulb above his head switches on |
-| `talk` | Model is answering | Text streaming; stops half a second after the text ends | Live on stream: headphones, podcast mic, an ON AIR sign that lights up while he speaks |
-| `read` | Reading code or memory | `read`, `grep`, `find`, `ls`, `glob`, `mem_search`, `codegraph_explore`, `web_fetch`… | Deerstalker hat, pipe and a magnifying glass |
-| `write` | Editing code | `write`, `edit`, `multi_edit`, `apply_patch` | Cooks code in a frying pan |
-| `tool` | Running other tools | Any other tool, e.g. `bash` | Whips the "IA" robot |
-| `ask` | A Yes/No is on screen | `ask_user_question`, `ask_user_choice`, or a confirm such as `Allow guarded git push?` | Raised palm with a Y/N bubble. It covers the execution until the prompt closes |
-| `success` | Agent finished fine | A run that used tools ends with no tool errors | Chef's kiss |
-| `failure` | Something failed | Tool result with error | The robot blows up in his face |
-| `compact` | Context compaction | `session_before_compact` | Shrinks in place, shirt stays black |
-| **`delegate`** | **Subagents** (generic) | `subagent_run`, `subagent_continue`, `subagent_reply` for an agent not listed below | Football coach with a whistle; three "IA" robots do jumping jacks |
-| **`explore`** | Exploring subagent | `subagent_run` with an agent matching `explore` (`gentle-ai-explore`) | Backpack and three steps. The flashlight lights footprints on the ground |
-| **`build`** | Implementing / fixing subagent | Agent matching `worker`, `fix` or `apply` (`gentle-ai-worker`, `jd-fix-agent`) | Welding mask and a torch on the "IA" robot |
-| **`verify`** | Verifying subagent | Agent matching `verify` or `validator` (`gentle-ai-verify`, `review-validator`) | Police cap and badge. The robot raises its arms and a green stamp lands on it. A failed verify tool shows a red stamp |
-| **`judge`** | Judging subagent | Agent matching `judge` or `refuter` (`jd-judge-a`, `jd-judge-b`, `review-refuter`) | Powdered wig and a gavel strike |
-| **`review`** | Reviewing subagent | Agent starting with `review-` (`review-readability`, `review-reliability`, `review-resilience`, `review-risk`) | Red pen in hand while the robot rotates the signs: magnifier, test tube, shield, warning |
-| **`jira`** | Jira subagent | Agent matching `jira` (`jira-comment`) | Launches a rocket that arrives in a cloud |
-| **`jobs`** | **Background jobs** | `bash_background`, `monitor`, `job_list`, `job_stop` | Sips mate while watching a progress bar, with a kitchen timer beside him |
-| **`yolo`** | **YOLO mode** | Reads Gentle Shell's permission mode when it is `yolo` (read-only, never changes it) | Sunglasses and a "YOLO" headband in every scene; at rest he holds a rocket |
-| **`super-yolo`** | **Super YOLO mode** | Reads Gentle Shell's permission mode when it is `super-yolo` | The same YOLO character, with a sun instead of the rocket |
-| **`remember`** | **Saves a memory in Engram** (optional) | `mem_save` | Cups a hand over his mouth and whispers into the Engram elephant's ear. The rim follows the accent color |
-| `grandma` | Long idle | No activity or keystrokes for `grandmaAfterMs` (30 s) | Turns into a knitting grandma. A key wakes him with a wave; the propeller beanie is only the session greeting |
-| `bye` | You say goodbye | A prompt matching `farewellPattern` (`chau`, `bye`, `nos vemos`…) | Tips his hat |
+| State | Situation | Detected by |
+|-------|-----------|-------------|
+| `hi` | Session starts | `session_start` |
+| `idle` | Waiting for you | No activity |
+| `think` | Model is reasoning | Thinking tokens streaming |
+| `talk` | Model is answering | Text streaming; stops half a second after it ends |
+| `read` | Reading code or memory | `read`, `grep`, `find`, `ls`, `glob`, `mem_search`, `codegraph_explore`, `web_fetch` |
+| `write` | Editing code | `write`, `edit`, `multi_edit`, `apply_patch` |
+| `tool` | Running any other tool | e.g. `bash` |
+| `ask` | A yes/no prompt is on screen | `ask_user_question`, `ask_user_choice`, or a confirm such as `Allow guarded git push?` |
+| `success` | The run ended fine | A run that used tools, with no tool errors |
+| `failure` | Something failed | A tool result with an error |
+| `compact` | Context compaction | `session_before_compact` |
+| `delegate` | Any subagent | `subagent_run`, `subagent_continue`, `subagent_reply` |
+| `explore` | Exploration subagent | An agent matching `explore` (`gentle-ai-explore`) |
+| `build` | Implementing or fixing subagent | An agent matching `worker`, `fix` or `apply` (`gentle-ai-worker`) |
+| `verify` | Verifying subagent | An agent matching `verify` or `validator` (`gentle-ai-verify`) |
+| `judge` | Judging subagent | An agent matching `judge` or `refuter` (`jd-judge-a`, `review-refuter`) |
+| `review` | Review subagent | An agent starting with `review-` (`review-risk`, `review-resilience`…) |
+| `jira` | Jira subagent | An agent matching `jira` (`jira-comment`) |
+| `jobs` | Background jobs | `bash_background`, `monitor`, `job_list`, `job_stop` |
+| `yolo` | YOLO mode | Gentle Shell's permission mode is `yolo` (read-only, never toggled) |
+| `super-yolo` | Super YOLO mode | Gentle Shell's permission mode is `super-yolo` |
+| `remember` | Saving a memory in Engram | `mem_save` |
+| `grandma` | Long idle | No activity or keystrokes for `grandmaAfterMs` (30 s) |
+| `bye` | You say goodbye | A prompt matching `farewellPattern` (`chau`, `bye`, `nos vemos`…) |
 
-The subagent scene comes from the `agent` argument of the tool call, so new agents that follow the same naming get the right scene for free. A call without an agent name (for example, continuing a task by id) shows `delegate`.
+The subagent scene comes from the `agent` argument of the tool call, so a new agent that follows the same naming gets the right scene for free; a call without one (for example, continuing a task by id) shows `delegate`.
 
-The subagent scenes, `jobs`, `yolo`, `super-yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states are simply never triggered. In plain Pi the rest works the same.
-
-The rose on his chest follows your accent color (Gentle Shell's `/gentle:customize`), and so does the YOLO headband.
+The subagent scenes, `jobs`, `yolo`, `super-yolo` and `remember` need the matching Gentle Shell tools or the Engram extension. Without them those states simply never trigger; the rest works the same in plain Pi.
 
 ## Config
 
@@ -106,15 +139,15 @@ Drop a `config.json` with only the keys you want to change in either place (the 
 | `emotes` | `gentleman` | Emote set per model or thinking level (see below) |
 | `terminals` | see `config.json` | Renderer per terminal (see below) |
 
-See `config.json` in the package root for every default.
+`config.json` in the package root has every default.
 
 ## Create your own avatar
 
-The Gentleman is just the default set. You can swap in your own character (your face, your team's mascot, a cat) without touching the extension.
+The Gentleman is just the default set: swap in your own character without touching the extension.
 
 ### 1. Make the frames
 
-Create a folder named after your set with one subfolder of PNG frames per state:
+One folder per set, one subfolder of PNG frames per state:
 
 ```
 my-avatar/
@@ -129,8 +162,8 @@ my-avatar/
 ```
 
 - **Required:** only `idle`. A missing state just doesn't animate, so you can start small and add scenes later.
-- **Size:** any size works, because the image is scaled to fit the frame. Small pixel art such as 48×40 keeps it crisp.
-- **Frame order:** frames play in alphabetical order, so zero-pad the names (`_01`, `_02`…). Frames named `in_*` play once, then the other frames of that state loop. The greeting uses that for the landing.
+- **Size:** any size fits, because the image is scaled to the frame. Small pixel art such as 48×40 keeps it crisp.
+- **Frame order:** frames play in alphabetical order, so zero-pad the names (`_01`, `_02`…). Frames named `in_*` play once, then the other frames of that state loop; the greeting uses that for the landing.
 - **Transparency:** use a transparent background; the frame and the terminal show through.
 - **Accent color:** pixels painted exactly `#ff00ff` (base), `#aa00aa` (shade) or `#ff80ff` (light) follow the accent color, like the Gentleman's rose.
 
@@ -182,7 +215,7 @@ Entries are glob patterns against the model ID and/or thinking level. The last m
 
 ### A YOLO look for your avatar
 
-Ship a twin set named `<your-set>-yolo` (for example `my-avatar-yolo/`) next to it. While Gentle Shell's YOLO or Super YOLO mode is on, every frame comes from the twin instead; states missing there simply don't animate, so copy the whole set. The rest pose is `<set>/yolo/yolo.png` for the rocket and `<set>/super-yolo/super-yolo.png` for the sun. Without a twin, your avatar just keeps its normal look.
+Ship a twin set named `<your-set>-yolo` (for example `my-avatar-yolo/`) next to it. While Gentle Shell's YOLO or Super YOLO mode is on, every frame comes from the twin instead; states missing there simply don't animate, so copy the whole set. The rest pose is `<set>/yolo/yolo.png` for the rocket and `<set>/super-yolo/super-yolo.png` for the sun. Without a twin, your avatar keeps its normal look.
 
 ### Text-only avatars
 
@@ -220,9 +253,9 @@ Valid `render` values: `"auto"`, `"kitty-unicode"`, `"kitty"`, `"iterm2"`, `"asc
 
 ## Limitations
 
-- Placing the avatar beside the prompt relies on Pi's internal layout. If a future version changes it, the avatar falls back to sitting above the editor.
-- YOLO and Super YOLO detection uses Gentle Shell's internal channel. It only reads and observes the mode and never toggles it. YOLO rests on the rocket; Super YOLO rests on the sun. In other hosts neither look shows.
-- The `bye` animation plays when you say goodbye, not when the process quits: a quit clears the screen right away.
+- Sitting beside the prompt relies on Pi's internal layout. If a future version changes it, the avatar falls back to above the editor.
+- YOLO and Super YOLO detection uses Gentle Shell's internal channel: it only reads the mode, never toggles it. In other hosts neither look shows.
+- `bye` plays when you say goodbye, not when the process quits (a quit clears the screen right away).
 - Zellij has no image passthrough, so it gets the ASCII fallback.
 
 ## Contributing
