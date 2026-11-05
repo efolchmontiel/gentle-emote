@@ -210,12 +210,14 @@ The Gentleman is not hand-drawn: `scripts/sprites/` generates every frame from c
 
 **Alacritty has no image protocol**, and that is not something this extension can work around: images are not available there. Instead of drawing nothing, it renders the same PNG frames as 24-bit color half-blocks. How close that gets to the artwork is a matter of width, one column per two source rows:
 
-| `blocksCols` | Looks like |
-|---|---|
-| 14 | The face and props are guesses; lettering is gone |
-| 24 (default) | The character reads: head, props, colors |
-| 32 | Sunglasses, mustache and hat lettering become legible |
-| 48 | Pixel for pixel — the width of the Gentleman's own sprites |
+| `blocksCols` | Occupies | Looks like |
+|---|---|---|
+| 14 | 14×6 cells | The face and props are guesses; lettering is gone |
+| 24 (default) | 24×10 cells | The character reads: head, props, colors |
+| 32 | 32×14 cells | Sunglasses, mustache and hat lettering become legible |
+| 48 | 48×20 cells | Pixel for pixel — the width of the Gentleman's own sprites |
+
+The image renderers show the same art in about 10×4 cells, because a bitmap can use pixels smaller than a terminal cell and half-blocks cannot. That is the trade: `blocksCols` buys fidelity with room in the prompt gutter.
 
 A terminal that cannot do truecolor gets the ASCII bot.
 
