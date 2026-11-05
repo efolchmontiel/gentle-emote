@@ -16,6 +16,7 @@
   "scripts": {
     "test": "node --test \"tests/*.test.ts\"",
     "sprites": "node scripts/sprites/build.ts",
+    "scenes": "node scripts/sprites/scenes.ts",
     "pack:check": "npm pack --dry-run"
   },
   "keywords": [
