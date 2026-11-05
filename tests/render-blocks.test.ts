@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { BlocksRenderer, blocksWidth } from "../src/render_blocks.ts";
 import { decodePng } from "../src/png.ts";
 import { createAccentTransform, BANNER_ACCENTS } from "../src/accent.ts";
+import { toAvatarBlock } from "../src/widget.ts";
+import { DEFAULTS } from "../src/config.ts";
 
 const SET_DIR = join(import.meta.dirname, "..", "emotes", "gentleman");
 const IDLE_PNG = join(SET_DIR, "idle", "idle.png");
@@ -211,4 +213,17 @@ test("the avatar is drawn wider than size so half-blocks stay recognizable", () 
   assert.equal(blocksWidth(10), 14, "the default size renders 14 columns of blocks");
   assert.equal(blocksWidth(4), 8, "small sizes keep a floor so the face does not vanish");
   assert.ok(blocksWidth(20) > 20, "a bigger size always grows the avatar");
+});
+
+test("a wide text frame reserves the columns it actually paints, not the ascii canvas", () => {
+  // The prompt gutter is sized from AvatarBlock.cols. A blocks frame is wider than
+  // the 8-column ascii canvas, so it used to reserve 8 and paint 14: invisible avatar.
+  const renderer = new BlocksRenderer(14);
+  renderer.loadFrames(SET_DIR, EXT_DIR);
+  renderer.showFrame("idle", "idle.png");
+  const avatar = toAvatarBlock(renderer.getRenderedFrame(), { ...DEFAULTS, frame: false });
+  assert.ok(avatar, "a blocks frame is a text frame, so it belongs in the gutter");
+  const widest = Math.max(...avatar.lines.map((line) => stripAnsi(line).length));
+  assert.equal(widest, 14, "the frame is 14 cells wide");
+  assert.ok(avatar.cols >= widest, `reserved ${avatar.cols} columns for a ${widest}-cell frame`);
 });

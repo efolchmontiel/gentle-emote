@@ -12,12 +12,20 @@ const TEXT_CANVAS_COLS = 8;
 const TEXT_CANVAS_ROWS = 4;
 const MAX_GUTTER_ATTEMPTS = 20;
 
-function centerText(lines: string[]): string[] {
+/**
+ * Width a text frame needs. ASCII sets fit the fixed canvas; renderers that paint
+ * wider rows (blocks) must reserve what they actually draw, or the gutter clips them.
+ */
+function canvasCols(lines: string[]): number {
+  return Math.max(TEXT_CANVAS_COLS, ...lines.map((line) => visibleWidth(line)));
+}
+
+function centerText(lines: string[], cols = canvasCols(lines)): string[] {
   const rows = Math.max(TEXT_CANVAS_ROWS, lines.length);
   const top = Math.floor((rows - lines.length) / 2);
   return Array.from({ length: rows }, (_, row) => {
     const line = lines[row - top] ?? "";
-    const pad = Math.max(0, TEXT_CANVAS_COLS - visibleWidth(line));
+    const pad = Math.max(0, cols - visibleWidth(line));
     return " ".repeat(Math.floor(pad / 2)) + line + " ".repeat(Math.ceil(pad / 2));
   });
 }
@@ -31,7 +39,10 @@ export function toAvatarBlock(
   if (!frame) return null;
   const boxed = config.frame && border ? { border } : {};
   if (frame.kind === "placeholder") return { lines: frame.lines, cols: frame.cols, ...(frame.framed ? {} : boxed) };
-  if (frame.kind === "text") return { lines: centerText(frame.lines), cols: TEXT_CANVAS_COLS, ...boxed };
+  if (frame.kind === "text") {
+    const cols = canvasCols(frame.lines);
+    return { lines: centerText(frame.lines, cols), cols, ...boxed };
+  }
   return null;
 }
 
