@@ -36,7 +36,7 @@ function loadJsonFile(path: string): any | null {
   }
 }
 
-const DEFAULTS: Config = {
+export const DEFAULTS: Config = {
   enabled: true,
   debug: false,
   size: 10,
@@ -60,6 +60,8 @@ const DEFAULTS: Config = {
     { match: "wezterm", render: "iterm2" },
     { match: "ghostty", render: "kitty" },
     { match: "warpterminal", render: "kitty" },
+    { match: "herdr", render: "auto" },
+    { match: "alacritty", render: "blocks" },
   ],
 };
 

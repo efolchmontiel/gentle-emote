@@ -3,9 +3,12 @@ import type { TerminalMapping, ResolvedRenderer } from "./types.ts";
 import { checkTmuxPassthrough, detectOuterTerminal } from "./tmux.ts";
 import { log } from "./log.ts";
 
-type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "ascii";
+type Protocol = "kitty" | "kitty-unicode" | "iterm2" | "ascii" | "blocks";
 
 const MULTIPLEXERS = new Set(["tmux", "screen", "zellij"]);
+
+/** Pane managers that resolve their outer terminal instead of a static renderer. */
+const LAYERS = new Set(["herdr"]);
 
 /**
  * Detect the terminal or multiplexer name from environment variables.
@@ -21,13 +24,16 @@ export function detectTerminalName(): string {
   if (process.env.TMUX || term.startsWith("tmux")) return "tmux";
   if (term.startsWith("screen")) return "screen";
 
+  // --- Pane layers (they rewrite TERM and TERM_PROGRAM, so they come before emulators) ---
+  if (process.env.HERDR_ENV || process.env.HERDR_PANE_ID || termProgram === "herdr") return "herdr";
+
   // --- Terminal emulators ---
   if (process.env.KITTY_WINDOW_ID || termProgram === "kitty") return "kitty";
   if (process.env.GHOSTTY_RESOURCES_DIR || termProgram === "ghostty" || term.includes("ghostty")) return "ghostty";
   if (process.env.WEZTERM_PANE || termProgram === "wezterm") return "wezterm";
   if (process.env.ITERM_SESSION_ID || termProgram === "iterm.app") return "iterm2";
   if (termProgram === "vscode") return "vscode";
-  if (termProgram === "alacritty") return "alacritty";
+  if (termProgram === "alacritty" || term.startsWith("alacritty")) return "alacritty";
   if (termProgram === "warpterminal") return "warpterminal";
 
   return "unknown";
@@ -51,6 +57,10 @@ export function resolveRenderer(
 
   if (MULTIPLEXERS.has(name)) {
     return resolveMultiplexer(name, terminals, userConfiguredTerminals);
+  }
+
+  if (LAYERS.has(name)) {
+    return resolveLayer(name, terminals, userConfiguredTerminals);
   }
 
   return resolveDirect(name, terminals);
@@ -166,11 +176,87 @@ function resolveDirect(
     return { ...base, protocol: render };
   }
 
-  // No whitelist match — fall back to pi-tui capabilities
+  // No whitelist match — fall back to pi-tui capabilities. That guess can be wrong
+  // (it reports images for a layer that has none outside it), so say so.
   const caps = getCapabilities();
   const fallback: Protocol = caps.images ?? "ascii";
   log(`terminal: no whitelist match for "${name}", using pi-tui capabilities → "${fallback}"`);
-  return { ...base, protocol: fallback };
+  if (fallback === "ascii") return { ...base, protocol: fallback };
+  return {
+    ...base,
+    protocol: fallback,
+    warningLevel: "info",
+    warning: `[gentle-emote] Unrecognized terminal "${name}"; pi-tui reports "${fallback}" images. If the avatar does not appear, set "render": "blocks" for it in your terminals config.`,
+  };
+}
+
+/**
+ * Resolve renderer for a pane layer that rewrites TERM/TERM_PROGRAM (herdr).
+ *
+ * The layer speaks kitty graphics itself, so an image renderer only works when
+ * the terminal outside it can draw kitty images. Those terminals leak their own
+ * env vars through the layer; when nothing leaks, fall back to text instead of
+ * trusting pi-tui, which reports the layer's own claim.
+ */
+function resolveLayer(
+  name: string,
+  terminals: TerminalMapping[],
+  userConfiguredTerminals: Set<string>,
+): ResolvedRenderer {
+  const base: ResolvedRenderer = {
+    protocol: "ascii",
+    multiplexer: null,
+    warning: null,
+    warningLevel: "warning",
+  };
+
+  const entry = terminals.find((e) => e.match === name);
+  if (entry && entry.render !== "auto") {
+    log(`terminal: layer "${name}" → "${entry.render}"${userConfiguredTerminals.has(name) ? " (user configured)" : " (default)"}`);
+    return { ...base, protocol: entry.render };
+  }
+
+  const outer = detectLayerOuter();
+  if (outer) {
+    log(`terminal: layer "${name}" over an image-capable outer terminal → "${outer}"`);
+    return { ...base, protocol: outer };
+  }
+
+  const protocol = textProtocol();
+  log(`terminal: layer "${name}" over a terminal without images → "${protocol}"`);
+  if (userConfiguredTerminals.has(name)) return { ...base, protocol };
+
+  return {
+    ...base,
+    protocol,
+    warning: `[gentle-emote] ${name} detected over a terminal with no image support (such as Alacritty), so the avatar is drawn as text. Choose it explicitly with { "match": "${name}", "render": "${protocol}" } (or "ascii") in your terminals config.`,
+  };
+}
+
+/**
+ * The outer terminal behind a pane layer, from the env vars it passes through.
+ * Only kitty-class images survive the layer, and WezTerm speaks kitty graphics.
+ */
+function detectLayerOuter(): Protocol | null {
+  if (process.env.KITTY_WINDOW_ID) return "kitty-unicode";
+  if (process.env.GHOSTTY_RESOURCES_DIR) return "kitty-unicode";
+  if (process.env.WEZTERM_PANE) return "kitty-unicode";
+  log("terminal: layer found no outer terminal signal");
+  return null;
+}
+
+/** The best text renderer this terminal can draw: truecolor blocks, else ascii. */
+function textProtocol(): Protocol {
+  return supportsTruecolor() ? "blocks" : "ascii";
+}
+
+function supportsTruecolor(): boolean {
+  const colorterm = (process.env.COLORTERM ?? "").toLowerCase();
+  const term = (process.env.TERM ?? "").toLowerCase();
+  if (colorterm === "truecolor" || colorterm === "24bit") return true;
+  if (term.includes("truecolor") || term.includes("24bit") || term.includes("direct")) return true;
+  const hint = `${term} ${(process.env.TERM_PROGRAM ?? "").toLowerCase()}`;
+  return /alacritty|kitty|ghostty|wezterm|iterm|vscode|warp/.test(hint);
 }
 
 /**

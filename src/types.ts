@@ -46,11 +46,11 @@ export interface EmoteMapping {
 
 export interface TerminalMapping {
   match: string;
-  render: "kitty" | "kitty-unicode" | "iterm2" | "ascii" | "auto";
+  render: "kitty" | "kitty-unicode" | "iterm2" | "ascii" | "blocks" | "auto";
 }
 
 export interface ResolvedRenderer {
-  protocol: "kitty" | "kitty-unicode" | "iterm2" | "ascii";
+  protocol: "kitty" | "kitty-unicode" | "iterm2" | "ascii" | "blocks";
   multiplexer: "tmux" | "screen" | "zellij" | null;
   warning: string | null;
   warningLevel: "warning" | "info";
