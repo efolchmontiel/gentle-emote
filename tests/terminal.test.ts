@@ -124,9 +124,16 @@ test("the terminals that already worked keep their renderer", () => {
     assert.equal(resolve(DEFAULTS.terminals).protocol, "kitty"));
   withEnv({ TERM_PROGRAM: "WezTerm", WEZTERM_PANE: "0" }, () =>
     assert.equal(resolve(DEFAULTS.terminals).protocol, "iterm2"));
-  // iTerm2 has no whitelist entry: pi-tui reports the protocol there, so the name is the contract.
-  withEnv({ TERM_PROGRAM: "iTerm.app", ITERM_SESSION_ID: "w0t0p0" }, () =>
-    assert.equal(detectTerminalName(), "iterm2"));
+  withEnv({ TERM_PROGRAM: "iTerm.app", ITERM_SESSION_ID: "w0t0p0" }, () => {
+    const resolved = resolve(DEFAULTS.terminals);
+    assert.equal(resolved.protocol, "iterm2");
+    assert.equal(resolved.warning, null, "iTerm2 is supported, so it must not warn");
+  });
+  withEnv({ KITTY_WINDOW_ID: "1", TERM: "xterm-kitty" }, () => {
+    const resolved = resolve(DEFAULTS.terminals);
+    assert.equal(resolved.protocol, "kitty");
+    assert.equal(resolved.warning, null, "kitty is supported, so it must not warn");
+  });
   withEnv({ ZELLIJ: "0" }, () => {
     const resolved = resolve(DEFAULTS.terminals);
     assert.equal(resolved.protocol, "ascii");
@@ -141,5 +148,10 @@ test("the shipped defaults carry herdr and alacritty, in the code and in config.
   for (const terminals of [DEFAULTS.terminals, packageConfig.terminals]) {
     assert.deepEqual(terminals.find((entry) => entry.match === "herdr"), { match: "herdr", render: "auto" });
     assert.deepEqual(terminals.find((entry) => entry.match === "alacritty"), { match: "alacritty", render: "blocks" });
+    // Every name detection can return has its own entry, so none of them depends
+    // on pi-tui's guess or gets the "unrecognized terminal" warning.
+    for (const [name, render] of [["kitty", "kitty"], ["iterm2", "iterm2"], ["ghostty", "kitty"], ["wezterm", "iterm2"]] as const) {
+      assert.deepEqual(terminals.find((entry) => entry.match === name), { match: name, render });
+    }
   }
 });
