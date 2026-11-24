@@ -2,6 +2,11 @@
 
 All notable changes to gentle-emote will be documented in this file. Entries before v0.1.0 belong to [pi-emote](https://github.com/cgxeiji/pi-emote), the upstream project.
 
+## Unreleased
+
+### Fixed
+- **Flash** — the kitty Unicode renderer no longer blanks the avatar between frames. Each distinct frame is transmitted once under its own image id, and changing frame only changes the placeholder text, so the visible image is never replaced in place.
+
 ## gentle-emote v0.1.4
 
 ### Fixed

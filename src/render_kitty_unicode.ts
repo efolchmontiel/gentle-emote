@@ -135,6 +135,8 @@ export class KittyUnicodeRenderer implements Renderer {
   private currentFrame: RenderedFrame | null = null;
   private size: number;
   private imageId: number;
+  private nextImageId: number;
+  private uploaded = new Map<string, number>();
   private passthrough: boolean;
   private frameRows: number;
   private frameColor: Rgb = defaultBorderColor();
@@ -149,6 +151,21 @@ export class KittyUnicodeRenderer implements Renderer {
     this.frameRows = frameRows;
     // Random 24-bit image ID (required for truecolor encoding)
     this.imageId = Math.floor(Math.random() * 0xFFFFFE) + 1;
+    this.nextImageId = this.imageId;
+  }
+
+  private allocateImageId(): number {
+    const id = this.nextImageId;
+    this.nextImageId = (this.nextImageId % 0xFFFFFE) + 1;
+    return id;
+  }
+
+  private deleteUploaded() {
+    for (const id of this.uploaded.values()) {
+      const del = `\x1b_Ga=d,d=I,i=${id},q=2\x1b\\`;
+      process.stdout.write(this.passthrough ? wrapTmuxPassthrough(del) : del);
+    }
+    this.uploaded.clear();
   }
 
   /** Border colour follows the theme; returns true when it changed. */
@@ -212,14 +229,24 @@ export class KittyUnicodeRenderer implements Renderer {
       rows = placeholderRows(dims, cols, cellDims);
     }
 
-    // Transmit image data via passthrough (uploads to terminal's image store)
-    const transmit = buildTransmitSequence(payload, this.imageId, cols, rows, this.passthrough);
-    process.stdout.write(transmit);
+    // Upload each distinct frame once under its own id; later shows only swap
+    // the placeholder text, so the visible image is never replaced in place.
+    const uploadKey = `${cols}x${rows}|${showKey}`;
+    let imageId = this.uploaded.get(uploadKey);
+    const reused = imageId !== undefined;
+    if (imageId === undefined) {
+      if (this.uploaded.size >= 256) this.deleteUploaded();
+      imageId = this.allocateImageId();
+      const transmit = buildTransmitSequence(payload, imageId, cols, rows, this.passthrough);
+      process.stdout.write(transmit);
+      this.uploaded.set(uploadKey, imageId);
+    }
+    this.imageId = imageId;
 
     // Build placeholder grid as text lines
-    const lines = buildPlaceholderLines(this.imageId, cols, rows);
+    const lines = buildPlaceholderLines(imageId, cols, rows);
 
-    log(`KittyUnicodeRenderer.show: dims=${dims.widthPx}x${dims.heightPx}, cols=${cols}, rows=${rows}, framed=${framed}, imageId=${this.imageId}`);
+    log(`KittyUnicodeRenderer.show: dims=${dims.widthPx}x${dims.heightPx}, cols=${cols}, rows=${rows}, framed=${framed}, imageId=${imageId}, reused=${reused}`);
 
     this.currentFrame = { kind: "placeholder", lines, rows, cols, framed };
     this.tuiRef?.requestRender();
@@ -283,9 +310,8 @@ export class KittyUnicodeRenderer implements Renderer {
   }
 
   dispose() {
-    // Delete image from terminal's graphics memory
-    const del = `\x1b_Ga=d,d=I,i=${this.imageId},q=2\x1b\\`;
-    process.stdout.write(this.passthrough ? wrapTmuxPassthrough(del) : del);
+    // Delete every uploaded frame from terminal's graphics memory
+    this.deleteUploaded();
     this.currentFrame = null;
   }
 
